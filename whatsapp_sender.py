@@ -54,10 +54,10 @@ for index, row in df.iterrows():
             EC.element_to_be_clickable((By.XPATH, '//button[contains(@aria-label, "إرسال")]'))
         )
         send_button.click()
-        time.sleep(5)  # انتظار بسيط للتأكد من الإرسال
+        time.sleep(10)  # انتظار بسيط للتأكد من الإرسال
         print(f"✅ Message sent to {client_name} ({number})")
 
-    except:
+    except Exception as e:
         # ✅ التحقق مما إذا كان الرقم غير مسجل في واتساب
         error_message = driver.find_elements(By.XPATH, '//div[contains(text(), "غير مسجل في واتساب")]')
         if error_message:
@@ -68,11 +68,11 @@ for index, row in df.iterrows():
                 "Error": "رقم غير مسجل في واتساب"
             })
         else:
-            print(f"❌ Failed to send the message to {client_name} ({number}) - Unknown error")
+            print(f"{RED}❌ Failed to send the message to {client_name} ({number}) - {str(e)}{RESET}")
             failed_numbers.append({
                 "ClientName": client_name,
                 "PhoneNumber": number,
-                "Error": "خطأ غير معروف"
+                "Error": str(e)  # عرض الخطأ الفعلي هنا مفيد للتشخيص
             })
         continue  # الانتقال إلى الرقم التالي
 
