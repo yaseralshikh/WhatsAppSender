@@ -11,7 +11,6 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.keys import Keys
-from webdriver_manager.chrome import ChromeDriverManager
 
 # ✅ ألوان الكونسول
 RED = "\033[91m"
@@ -34,16 +33,17 @@ if not required_cols.issubset(df.columns):
     input("اضغط Enter للخروج...")
     sys.exit(1)
 
-# ✅ إعداد متصفح Chrome مع بروفايل ثابت
+# ✅ إعداد متصفح Chrome مع بروفايل ثابت (خارج Temp لضمان الاحتفاظ بالجلسة)
 options = webdriver.ChromeOptions()
-options.add_argument(r"--user-data-dir=C:\Users\Yaser Alshikh\AppData\Local\Temp\chrome_profile_whatsapp")
+options.add_argument(r"--user-data-dir=C:\Users\Yaser Alshikh\AppData\Local\chrome_profile_whatsapp")
 options.add_argument("--profile-directory=Default")
 options.add_argument("--disable-extensions")
 options.add_argument("--disable-infobars")
 options.add_argument("--disable-notifications")
 options.add_argument("--log-level=3")
 
-service = Service(ChromeDriverManager().install())
+# ✅ استخدام chromedriver المحلي بدلاً من التحميل كل مرة
+service = Service(r"chromedriver-win64\chromedriver-win64\chromedriver.exe")
 driver = webdriver.Chrome(service=service, options=options)
 
 # ✅ فتح واتساب ويب
@@ -56,12 +56,10 @@ print(f"{YELLOW}🔒 Protected and owned. {RESET}📌 Contact for improvements o
 print(f"{YELLOW}© All rights reserved. {RESET}💡 Idea and implementation by Yaser.")
 print(f"{CYAN}----------------------------------------------\n{RESET}")
 
-input("🔵 إذا كانت هذه أول مرة أو لم تكن مسجلاً، افتح الجوال ومسح QR في واتساب ويب، ثم اضغط Enter بعد ظهور محادثاتك...")
-
-# ✅ التحقق من تسجيل الدخول
+# ✅ التحقق من تسجيل الدخول — إذا لم يكن مسجلاً نطلب مسح QR
+print(f"{CYAN}⏳ جاري التحقق من الجلسة المحفوظة...{RESET}")
 try:
-    # ننتظر ظهور أي عنصر يدل على أن المحادثات ظهرت
-    WebDriverWait(driver, 60).until(
+    WebDriverWait(driver, 15).until(
         EC.presence_of_element_located(
             (
                 By.XPATH,
@@ -69,12 +67,25 @@ try:
             )
         )
     )
-    print(f"{GREEN}✅ تم التأكد من تسجيل الدخول إلى واتساب ويب.{RESET}")
+    print(f"{GREEN}✅ تم استعادة الجلسة — لا حاجة لمسح QR.{RESET}")
 except Exception:
-    print(f"{RED}❌ لم يتم اكتشاف واجهة المحادثات. تأكد أنك سجلت الدخول بشكل صحيح ثم أعد تشغيل البرنامج.{RESET}")
-    driver.quit()
-    input("اضغط Enter للخروج...")
-    sys.exit(1)
+    print(f"{YELLOW}🔵 لم يتم العثور على جلسة محفوظة. افتح الجوال ومسح QR في واتساب ويب.{RESET}")
+    input("اضغط Enter بعد ظهور محادثاتك...")
+    try:
+        WebDriverWait(driver, 60).until(
+            EC.presence_of_element_located(
+                (
+                    By.XPATH,
+                    '//div[@role="grid"] | //div[@data-testid="chat-list"]'
+                )
+            )
+        )
+        print(f"{GREEN}✅ تم تسجيل الدخول بنجاح.{RESET}")
+    except Exception:
+        print(f"{RED}❌ لم يتم اكتشاف واجهة المحادثات. أعد تشغيل البرنامج.{RESET}")
+        driver.quit()
+        input("اضغط Enter للخروج...")
+        sys.exit(1)
 
 failed_numbers = []
 log_records = []
